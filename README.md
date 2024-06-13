@@ -214,6 +214,19 @@ After debugging the issue, the guessing of the issue could be:
 
 But since the issue didn't happen in the version Spring Cloud Azure 4.16.0, with azure-core:1.46.0, so the root cause still needs to be identified.
 
+## The actual root cause
+
+Even though the parent context is also a problem, but the actual root cause of this issue is (with the help of the author):
+
+- A regression introduced in https://github.com/Azure/azure-sdk-for-java/pull/38013 in azure-core 1.46.0 (released in Feb 2024)
+- It was fixed in https://github.com/Azure/azure-sdk-for-java/pull/39381 in azure-core 1.48.0 (released in April 2024)
+
+And the analysis is:
+
+- Azure-core changed the behavior on when to end HTTP span (such as "HTTP GET https://xxx.vault.azure.net/secrets?api-version=7.4"). As a result of this change, the span was reported when response was closed, failed, or was cancelled.
+- In many cases response does not have to be closed, it just needs to be read to the last byte. In these cases, azure-core did not close the HTTP span resulting in missing dependencies in Application Insights.
+ 
+
 
 
   
